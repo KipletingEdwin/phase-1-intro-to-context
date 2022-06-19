@@ -1,71 +1,87 @@
 // Your code here
-let createEmployeeRecord= function (row){
-    return{
-        firstName:row[0],
-        familyName:row[1],
-        title:row[2],
-        payPerHour:row[3],
-        timeInEvents:[],
-        timeOutEvents:[]
+function createEmployeeRecord([firstname, familyname, title, payratePerHour]){
+    return {
+        'firstName': firstname,
+        'familyName': familyname,
+        'title': title,
+        'payPerHour': payratePerHour,
+        'timeInEvents': [],
+        'timeOutEvents': []
     }
 }
-let createEmployeeRecords=function (employeeData){
-    return employeeData.map(function(row){
-        return createEmployeeRecord(row)
-    })
-}
-let createTimeInEvent = function(stampedDate){
-    let [date, hour] = stampedDate.split(' ')
 
-    this.timeInEvents.push({
-        type: "TimeIn",
-        hour: parseInt(hour, 10),
-        date,
-    })
-
-    return this
+function createEmployeeRecords(employeeRecordArray){
+    let employeeRecords = []
+    for (let employeeRecord of employeeRecordArray){
+        employeeRecords.push(createEmployeeRecord(employeeRecord))
+    }
+    return employeeRecords
 }
 
-let createTimeOutEvent=function(stampedDate){
-    let [date,hour] = stampedDate.split('')
-
-    this.timeOutEvents.push({
-        type:"TimeOut",
-        hour:parseInt(hour,10),
-        date,
-    })
-    return this
-}
-let hoursWorkedOnDate=function(manageDate){
-    let timeIn=this.timeInEvents.find(function(e){
-        return e.date === manageDate
-    })
-
-    let timeOut=this.timeOutEvents.find(function(e){
-        return e.date === manageDate
-    })
-    return (timeIn.hour - timeOut.hour)/100
-}
-let wage = function (manageDate){
-    let dayWage = hoursWorkedOnDate.call(this,manageDate) * this.payPerHour
-
-    return parseFloat(dayWage.toString())
+function createTimeInEvent(employeeRecord, dateStamp){
+    const date = dateStamp.slice(0,10)
+    const hour = parseInt(dateStamp.slice(11,))
+    const newTimeIn = {
+        'type': 'TimeIn',
+        'hour': hour,
+        'date': date
+    }
+    employeeRecord.timeInEvents.push(newTimeIn)
+    return employeeRecord
 }
 
-let allWagesFor=function(){
-    let  availableDates = this.timeInEvents.map(function(e){
-        return e.date
-    })
-
-    let totalPay =  availableDates.reduce(function(memo,d){
-        return memo + wage.call(this,d)
-    }.bind(this),0)
-
-    return payable
+function createTimeOutEvent(employeeRecord, dateStamp){
+    const date = dateStamp.slice(0,10)
+    const hour = parseInt(dateStamp.slice(11,))
+    const newTimeOut = {
+        'type': 'TimeOut',
+        'hour': hour,
+        'date': date
+    }
+    employeeRecord.timeOutEvents.push(newTimeOut)
+    return employeeRecord
 }
 
-let findWorkerByFirstName = function(listOfWorkers){
-    return listOfWorkers.reduce(function(memo,record){
-        return memo + allWagesFor.call(record)
-    },0)
+function hoursWorkedOnDate(employeeRecord, dateStamp){
+    let hoursWorked
+    let hourIn
+    let hourOut
+    employeeRecord.timeInEvents.forEach((timeIn)=>{
+        if (timeIn.date === dateStamp){
+            hourIn = timeIn.hour/100
+        }
+    })
+    employeeRecord.timeOutEvents.forEach((timeOut)=>{
+        if (timeOut.date === dateStamp){
+            hourOut = timeOut.hour/100
+        }
+    })
+    hoursWorked = hourOut - hourIn
+    return hoursWorked
+}
+
+function wagesEarnedOnDate(employeeRecord, dateStamp){
+    const hoursWorked = hoursWorkedOnDate(employeeRecord, dateStamp)
+    const wagesEarned = hoursWorked * employeeRecord.payPerHour
+    return wagesEarned
+}
+
+function allWagesFor(employeeRecord){
+    let allDates = []
+    let pay = 0
+    employeeRecord.timeOutEvents.forEach((timeOut)=>{
+        allDates.push(timeOut.date)
+    })
+    allDates.forEach((date) => {
+        pay = pay + wagesEarnedOnDate(employeeRecord, date)
+    })
+    return pay
+}
+
+function calculatePayroll(employeeRecordArray){
+    let totalPayOwed = 0
+    employeeRecordArray.forEach(employeeRecord => {
+       totalPayOwed += allWagesFor(employeeRecord)
+    })
+    return totalPayOwed
 }
